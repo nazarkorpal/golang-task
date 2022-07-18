@@ -37,13 +37,13 @@ func main() {
 	defer close(ch)
 
 	wg.Add(2)
-	go Server(ctx, wg, ch, config.ServerInterval, config.Message)
-	go Client(ctx, wg, ch)
+	go Client(ctx, wg, ch, config.SenderInterval, config.Message)
+	go Server(ctx, wg, ch)
 
 	wg.Wait()
 }
 
-func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data) {
+func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data) {
 	defer wg.Done()
 
 	for {
@@ -60,7 +60,7 @@ func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data) {
 	}
 }
 
-func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint, message string) {
+func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint, message string) {
 	defer wg.Done()
 	counter := 0
 
