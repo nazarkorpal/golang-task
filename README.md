@@ -1,6 +1,6 @@
 # golang-task
 
-To run project you need to run 2 commands:
+To run project:
     1. go mod download
     2. go run main.go
 
