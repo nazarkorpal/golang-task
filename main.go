@@ -52,7 +52,7 @@ func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data, isClosed *boo
 		case data := <-ch:
 			fmt.Printf("Timestamp: %s \nMessage: %s \n-----------------------\n", data.Timestamp.Format("2006-01-02 15:04:05Z07:00"), data.Message)
 		case <-ctx.Done():
-			*isClosed = false
+			*isClosed = true
 			return
 		}
 
@@ -76,7 +76,7 @@ func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint
 				}
 			}
 		case <-ctx.Done():
-			*isClosed = false
+			*isClosed = true
 			return
 		}
 	}
