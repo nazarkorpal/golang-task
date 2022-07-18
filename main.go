@@ -24,6 +24,7 @@ func init() {
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+	isClosed := false
 
 	go func() {
 		time.Sleep(time.Minute)
@@ -37,13 +38,13 @@ func main() {
 	defer close(ch)
 
 	wg.Add(2)
-	go Client(ctx, wg, ch, config.SenderInterval, config.Message)
-	go Server(ctx, wg, ch)
+	go Client(ctx, wg, ch, config.SenderInterval, config.Message, &isClosed)
+	go Server(ctx, wg, ch, &isClosed)
 
 	wg.Wait()
 }
 
-func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data) {
+func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data, isClosed *bool) {
 	defer wg.Done()
 
 	for {
@@ -51,16 +52,15 @@ func Server(ctx context.Context, wg *sync.WaitGroup, ch chan Data) {
 		case data := <-ch:
 			fmt.Printf("Timestamp: %s \nMessage: %s \n-----------------------\n", data.Timestamp.Format("2006-01-02 15:04:05Z07:00"), data.Message)
 		case <-ctx.Done():
+			*isClosed = false
 			return
-		default:
-			time.Sleep(time.Second)
 		}
 
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint, message string) {
+func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint, message string, isClosed *bool) {
 	defer wg.Done()
 	counter := 0
 
@@ -69,11 +69,14 @@ func Client(ctx context.Context, wg *sync.WaitGroup, ch chan Data, interval uint
 
 		select {
 		case <-time.After(time.Second * time.Duration(interval)):
-			ch <- Data{
-				Timestamp: time.Now(),
-				Message:   fmt.Sprintf("%s #%d", message, counter),
+			if !*isClosed {
+				ch <- Data{
+					Timestamp: time.Now(),
+					Message:   fmt.Sprintf("%s #%d", message, counter),
+				}
 			}
 		case <-ctx.Done():
+			*isClosed = false
 			return
 		}
 	}
